@@ -1,0 +1,98 @@
+
+LIBNIX - Standard C link library for amiga-specific gcc development
+
+	Copyright (C) 1996 Matthias Fleischer
+	Copyright (C) 2000 Gunther Nikl
+	Copyright (C) 2004 Jeff Shepherd
+	Copyright (C) 2009 Diego Casorran
+
+This is libnix 3.0, based on the version 2.1 released by Jeff Shepherd
+at SourceForge: http://sourceforge.net/projects/libnix/
+
+Please note this repository contains "sources/nix" source code needed to
+build libnix.a Thus, this is intended as an update to the old library,
+no additional libs source code is included since they were not modified.
+
+
+The list of changes between 2.1 and 3.0 are as follow:
+
+* extra/gettimeofday.c: changed to use GetSysTime() with UNIT_MICROHZ
+
+* misc/bcopy.c: Optimized small operations
+
+* misc/bzero.c: Optimized small operations
+
+* stdio/*: stdin, stdout, and stderr are now protected from being closed..
+
+* stdio/fputs.c: bugfix for segfaults caused while using stderr
+
+* stdio/fwrite.c: bugfix for segfaults caused while using stderr
+
+* stdio/open.c: bugfix due no Seek()'ing to EOF when O_APPEND is used (!)
+
+* stdio/open.c: MODE_READWRITE will only be used when O_CREAT
+
+* stdio/open.c: stderr is now opened by using CONSOLE: instead of '*'
+
+* stdio/open.c: _allocfd() will reallocate stdfiledes on increments by 10
+
+* stdio/open.c: Improved write() function
+
+* stdio/perror.c: bugfix for segfaults caused by using stderr
+
+* stdio/vfprintf.c: replaced fputc by putc to make it somewhat faster
+
+* stdio/vsnprintf.c: fixed a "buffer full" state bug..
+
+* stdio/__swbuf.c: workaround/bugfix for unbuffered streams..
+
+* stdlib/malloc.c: moved free() here and made local variables static
+
+* stdlib/malloc.c: Removed "dummy" opening of dos.library
+
+* stdlib/realloc.c: Changed CopyMem() to bcopy()
+
+* string/memchr.c: Speed Improvement
+
+* string/memcmp.c: Speed Improvement
+
+* string/memcpy.c: Replaced CopyMem() by internal bcopy()
+
+* string/memset.c: Optimized small operations
+
+* time/clock.c: Changed to use ReadEClock
+
+* Added POSIX Semaphores implementation.
+
+* Added dummy implementations for dcgettext, dgettext, gettext, textdomain
+
+* Added libmui.a functions - why not?
+
+* Added auto-initialization for timer.device
+
+* Added auto initialization of bsdsocket.library, including mapping
+  of errno/h_errno variables and program name to [v]syslog messages.
+
+* Added functions: v/asprintf, fnmatch, strlcat, nl_langinfo, basename,
+  getline, getdelim, readpassphrase, getpass, getpass_r, memrchr, gmtime_r,
+  localtime_r, asctime_r, ctime_r, strerror_r, strtok_r, poll, strcmpi,
+  strncmpi, stristr, strcasestr, memdup, truncate, ftruncate, syslog,
+  openlog, closelog, setlogmask, inet_addr, socketpair, inet_aton, inet_ntoa,
+  inet_ntop, inet_pton, intoa, sleep, usleep, nanosleep, memmem, mempcpy,
+  stpncpy, physmem_total, physmem_available, getruntime, popen, pclose, ffs,
+  unctrl, unctrllen, telldir, seekdir, scandir, alphasort, strndup, strnlen,
+  strlcpy, strchrnul, 
+
+* Somewhat improved strtok, strtok_r, strspn, strdup
+
+* Added IEEE math functions sqrt, sqrtf, sqrtl, cbrt, cbrtf, cbrtl, exp,
+  expf, expl, exp2, exp2f, exp2l, hypot, hypotf, hypotl, log2, log2f, log2l,
+  log10, log10f, log10l, copysign, copysignf, copysignl, rint, rintf, rintl,
+  round, roundf, roundl, trunc, truncf, truncl, acosh, acoshf, acoshl
+
+* Added misc function ConsoleWidth(), on *nix this is normally achieved
+  using the following code (which you can replace with that function):
+  struct winsize wsz;
+  fd = fileno (stderr);
+  ioctl (fd, TIOCGWINSZ, &wsz);
+  return wsz.ws_col;

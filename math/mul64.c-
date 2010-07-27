@@ -1,0 +1,301 @@
+#include <stdio.h>
+#include <inttypes.h>
+#include "stabs.h"
+
+#if 0
+#define umul_ppmm3(xh, xl, a, b) \
+__asm__ ("| Inlined umul_ppmm\n" \
+" move.l %0,%/d5\n" \
+" move.l %1,%/d4\n" \
+" moveq #16,%/d3\n" \
+" move.l %0,%/d2\n" \
+" mulu %1,%0\n" \
+" lsr.l %/d3,%/d4\n" \
+" lsr.l %/d3,%/d5\n" \
+" mulu %/d4,%/d2\n" \
+" mulu %/d5,%1\n" \
+" mulu %/d5,%/d4\n" \
+" move.l %/d2,%/d5\n" \
+" lsr.l %/d3,%/d2\n" \
+" add.w %1,%/d5\n" \
+" addx.l %/d2,%/d4\n" \
+" lsl.l %/d3,%/d5\n" \
+" lsr.l %/d3,%1\n" \
+" add.l %/d5,%0\n" \
+" addx.l %/d4,%1" \
+: "=d" ((uint32_t) (xl)), "=d" ((uint32_t) (xh)) \
+: "0" ((uint32_t) (a)), "1" ((uint32_t) (b)) \
+: "d2", "d3", "d4", "d5")
+
+int64_t MUL64(int a, int b)
+{
+uint32_t au = a;
+uint32_t bu = b;
+
+uint32_t resh, resl;
+uint64_t res;
+
+umul_ppmm3(resh, resl, au, bu);
+
+if (a < 0)
+resh -= bu;
+if (b < 0)
+resh -= au;
+
+res = ((uint64_t)resh << 32) | resl;
+
+return res;
+}
+#else
+int64_t MUL64(int a, int b)
+{
+uint32_t resh, resl;
+uint32_t au = a;
+uint32_t bu = b;
+
+__asm__ ("move.l %0, d5\n\t"
+"move.l %1, d4\n\t"
+"moveq #16, d3\n\t"
+"move.l %0, d2\n\t"
+"mulu %1, %0\n\t"
+"lsr.l d3, d4\n\t"
+"lsr.l d3, d5\n\t"
+"mulu d4, d2\n\t"
+"mulu d5, %1\n\t"
+"mulu d5, d4\n\t"
+"move.l d2, d5\n\t"
+"lsr.l d3, d2\n\t"
+"add.w %1, d5\n\t"
+"addx.l d2, d4\n\t"
+"lsl.l d3, d5\n\t"
+"lsr.l d3, %1\n\t"
+"add.l d5, %0\n\t"
+"addx.l d4, %1\n\t"
+: "=d"(resl), "=d"(resh)
+: "0"(au), "1"(bu)
+: "d2", "d3", "d4", "d5");
+
+if (a < 0)
+resh -= bu;
+if (b < 0)
+resh -= au;
+
+return ((uint64_t)resh << 32) | resl;
+}
+#endif
+ALIAS(mul64,MUL64);
+ALIAS(__mul64,MUL64);
+
+
+
+
+
+
+
+
+int MULH(int a, int b)
+{
+
+uint32_t resh, resl;
+uint32_t au = a;
+uint32_t bu = b;
+
+__asm__ ("move.l %1, d5\n\t"
+"move.l %0, d4\n\t"
+"moveq #16, d3\n\t"
+"move.l %1, d2\n\t"
+"mulu %0, %1\n\t"
+"lsr.l d3, d4\n\t"
+"lsr.l d3, d5\n\t"
+"mulu d4, d2\n\t"
+"mulu d5, %0\n\t"
+"mulu d5, d4\n\t"
+"move.l d2, d5\n\t"
+"lsr.l d3, d2\n\t"
+"add.w %0, d5\n\t"
+"addx.l d2, d4\n\t"
+"lsl.l d3, d5\n\t"
+"lsr.l d3, %0\n\t"
+"add.l d5, %1\n\t"
+"addx.l d4, %0\n\t"
+: "=d"(resh), "=d"(resl)
+: "0"(au), "1"(bu)
+: "d2", "d3", "d4", "d5");
+
+if (a < 0)
+resh -= bu;
+if (b < 0)
+resh -= au;
+
+return (int)resh;
+}
+
+
+
+
+
+
+MAC64:
+
+68060 version:
+
+#include <stdio.h>
+#include <stdint.h>
+
+inline int64_t MUL64(int a, int b)
+{
+union { uint64_t x; unsigned hl[2]; } x;
+__asm__(
+"move.l %0, d5 \n\t"
+"move.l %0, d4 \n\t"
+"bge.b 0f \n\t"
+"neg.l %0 \n\t"
+"neg.l d4 \n\t"
+"0: \n\t"
+"eor.l %1, d5 \n\t"
+"move.l %1, d3 \n\t"
+"bge.b 1f \n\t"
+"neg.l %1 \n\t"
+"neg.l d3 \n\t"
+"1: \n\t"
+"move.w #16, d5 \n\t"
+"move.l %0, d2 \n\t"
+"mulu.w %1,%0 \n\t"
+"lsr.l d5, d3 \n\t"
+"lsr.l d5, d4 \n\t"
+"mulu.w d3, d2 \n\t"
+"mulu.w d4, %1 \n\t"
+"mulu.w d4, d3 \n\t"
+"move.l d2, d4 \n\t"
+"lsr.l d5, d2 \n\t"
+"add.w %1, d4 \n\t"
+"addx.l d2, d3 \n\t"
+"lsl.l d5, d4 \n\t"
+"lsr.l d5, %1 \n\t"
+"add.l d4, %0 \n\t"
+"addx.l d3, %1 \n\t"
+"tst.l d5 \n\t"
+"bpl.b 2f \n\t"
+"neg.l %0 \n\t"
+"negx.l %1 \n\t"
+"2: \n\t"
+:"=d"(x.hl[1]), "=d"(x.hl[0])
+:"0"(a), "1"(b)
+:"d2", "d3", "d4", "d5");
+return x.x;
+}
+
+
+inline int64_t MAC64(int64_t d, int a, int b)
+{
+return ((d) += MUL64(a, b));
+}
+
+
+68020 version:
+
+inline av_const int64_t MAC64(int64_t d, int a, int b)
+{
+union { int64_t x; int hl[2]; } x = { d };
+int h, l;
+__asm__ ("muls.l %5, %2:%3 \n\t"
+"add.l %3, %1 \n\t"
+"addx.l %2, %0 \n\t"
+: "+dm"(x.hl[0]), "+dm"(x.hl[1]),
+"=d"(h), "=&d"(l)
+: "3"(a), "dmi"(b));
+return x.x;
+}
+
+
+#define MULH(ra,rb) \
+({int rt; \
+__asm__( \
+"move.l %1,d5\n\t" \
+"move.l %1,d4\n\t" \
+"bge.b pos1\n\t" \
+"neg.l %1\n\t" \
+"neg.l d4\n\t" \
+"pos1:\n\t" \
+"eor.l %0,d5\n\t" \
+"move.l %0,d3\n\t" \
+"bge.b pos0\n\t" \
+"neg.l %0\n\t" \
+"neg.l d3\n\t" \
+"pos0:\n\t" \
+"move.w #16,d5\n\t" \
+"move.l %1,d2\n\t" \
+"mulu.w %0,%1\n\t" \
+"lsr.l d5,d3\n\t" \
+"lsr.l d5,d4\n\t" \
+"mulu.w d3,d2\n\t" \
+"mulu.w d4,%0\n\t" \
+"mulu.w d4,d3\n\t" \
+"move.l d2,d4\n\t" \
+"lsr.l d5,d2\n\t" \
+"add.w %0,d4\n\t" \
+"addx.l d2,d3\n\t" \
+"lsl.l d5,d4\n\t" \
+"lsr.l d5,%0\n\t" \
+"add.l d4,%1\n\t" \
+"addx.l d3,%0\n\t" \
+"tst.l d5\n\t" \
+"bpl.b goodsign\n\t" \
+"neg.l %1\n\t" \
+"negx.l %0\n\t" \
+"goodsign:\n\t" \
+:"=d"(rt) \
+:"0"((int)ra),"d"((int)rb) \
+:"d2","d3","d4","d5"); \
+rt;})
+
+
+
+
+
+
+
+
+
+static inline int MULH(int a, int b)
+{
+int hi;
+__asm__(
+"fmove.s #796917760,fp0 \n\t"
+"fmul.l %0,fp0 \n\t"
+"fmul.l %1,fp0 \n\t"
+"fmove.l fp0,%0 \n\t"
+:"=dm"(hi)
+:"0"(a), "dm"(b)
+);
+return hi;
+}
+
+static inline int64_t MUL64(int a, int b)
+{
+int lo, hi;
+__asm__(
+"fmove.l %0,fp0 \n\t"
+"muls.l %1,%0 \n\t"
+"bvs.b 0f \n\t"
+"smi %1 \n\t"
+"extb.l %1 \n\t"
+"bra.b 1f \n\t"
+"0: \n\t"
+"fmul.s #796917760,fp0 \n\t"
+"fmul.l %1,fp0 \n\t"
+"fmove.l fp0,%1 \n\t"
+"1: \n\t"
+:"=d"(lo), "=d"(hi)
+:"0"(a), "1"(b)
+);
+return ((uint64_t)hi <<32) | lo;
+}
+
+
+
+
+
+
+
+
